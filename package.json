@@ -1,14 +1,14 @@
 {
   "name": "hex-heroes",
-  "version": "3.1.0",
+  "version": "4.0.0",
   "private": true,
   "scripts": {
     "start": "python3 -m http.server 5173",
-    "check": "node --check game.js && node --check renderer.js && node --check boot.js",
+    "check": "node --check game.js && node --check renderer.js && node --check boot.js && node --check models.js && node --check battlefield.js",
     "test:browser": "node tests/browser-smoke.mjs",
     "vendor": "node scripts/vendor.mjs"
   },
   "dependencies": {
-    "three": "0.170.0"
+    "babylonjs": "8.38.0"
   }
 }

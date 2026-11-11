@@ -1,5 +1,6 @@
 // Keep the simulation in a classic script so its deterministic browser tests remain available.
 try {
+  await new Promise((resolve,reject)=>{const engine=document.createElement('script');engine.src='./vendor/babylon.js';engine.onload=resolve;engine.onerror=reject;document.head.append(engine);});
   const { BattleRenderer } = await import('./renderer.js');
   window.BattleRenderer = BattleRenderer;
   const script = document.createElement('script');

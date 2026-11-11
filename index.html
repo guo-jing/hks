@@ -1,8 +1,110 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b1420"><title>海克斯大乱斗 · 英雄对决</title><link rel="stylesheet" href="style.css"></head><body>
-<header><a href="./" class="brand"><span>⬡</span><div>海克斯大乱斗<small>H E X / H E R O E S</small></div></a><div class="match-title">凛冬长桥 · 5V5 团队对战</div><div><button id="help">操作指南</button> <button id="pause">Ⅱ 暂停</button></div></header><main>
-<div class="scoreboard"><span class="blue">◆ 蓝方 <b id="blue-score">0</b></span><span id="clock">00:00</span><span class="red"><b id="red-score">0</b> 红方 ◆</span><span id="objective">带领小兵推进，摧毁敌方水晶</span></div>
-<section class="game-shell"><div class="viewport"><canvas id="arena" tabindex="0" aria-label="英雄对战地图，右键移动或攻击，QWER施放技能"></canvas><div class="map-label">THE FROSTBOUND BRIDGE / 3D<span>凛冬长桥</span></div><div id="toast" role="status"></div><div id="target-info"></div><div id="overlay" class="overlay"><div class="welcome"><span class="badge">3D · 5V5 · 你 + 4 名队友 VS 5 名敌人</span><div class="crest">⚔</div><h1>以英雄之名，<em>改写战局。</em></h1><p>与四名电脑队友并肩，迎战五名敌方英雄。<br>3 级开局，开局、7、11、15 级选择海克斯强化。</p><div class="hero-preview"><img id="welcome-hero-portrait" alt="苍锋的 3D 模型"><div><b>苍锋 · 近战剑士</b><small>挥斩 / 护盾 / 突进 / 天坠裁决</small></div></div><button id="start" class="primary" disabled>正在加载 3D 战场…</button><small class="welcome-controls">右键移动 / 攻击 · Q W E R 技能 · S 停止 · 空格回到英雄</small></div></div><div class="camera-tools"><span>3D 视角</span><button id="zoom-out" title="拉远视角">−</button><button id="zoom-in" title="拉近查看模型">＋</button></div><div class="touch-controls"><button id="touch-attack">攻击</button></div></div>
-<div class="battle-hud"><div class="champion-card"><div class="portrait"><span id="level">3</span></div><div class="vitals"><div class="name-line"><b>苍锋</b><span id="kda">0 / 0 / 0</span></div><div class="health-track"><i id="hp-bar"></i><span id="hp-text">850 / 850</span></div><div class="mana-track"><i id="mana-bar"></i><span id="mana-text">350 / 350</span></div><div class="xp-track"><i id="xp-bar"></i></div><small id="experience-text" class="experience-text"></small></div></div><div id="skills" class="skills"></div><div class="economy"><span class="gold">◈ <b id="gold">0</b></span><span>补刀 <b id="cs">0</b></span><button id="shop">装备商店 <kbd>B</kbd></button></div><canvas id="minimap" width="200" height="112" aria-label="战场小地图"></canvas></div></section>
-<div class="below"><span><kbd>右键</kbd> 移动 / 锁定攻击 <kbd>Q W E R</kbd> 向鼠标施法 <kbd>S</kbd> 停止 <kbd>P</kbd> 暂停</span><span id="order">等待出战</span></div><section class="teams-panel" aria-label="双方英雄阵容"><div class="team-roster blue-roster"><div class="roster-heading">蓝方阵容 <span id="blue-alive">5 / 5 存活</span></div><div id="blue-roster" class="roster-cards"></div></div><div class="team-roster red-roster"><div class="roster-heading">红方阵容 <span id="red-alive">5 / 5 存活</span></div><div id="red-roster" class="roster-cards"></div></div></section><section class="build-row"><div><p class="eyebrow">HEXTECH BUILD</p><h2>你的海克斯构筑 <span id="augment-count">0 / 4 已选择</span></h2><p id="augment-status" class="augment-status"></p></div><div id="augment-list"><span class="empty">海克斯仅在开局、7、11、15 级触发，每局四轮。</span></div></section><footer>原创 3D 英雄竞技 · 非官方游戏<span>推塔前，让小兵先行。攻击敌方英雄会吸引防御塔仇恨。</span></footer></main>
-<dialog id="help-dialog"><button class="close" id="close-help">×</button><p class="eyebrow">HOW TO PLAY</p><h2>控制英雄，赢下这条路</h2><p><b>右键地面</b>移动，<b>右键敌人</b>锁定普攻，超出攻击距离会追击。左键选中目标，<b>S</b>取消攻击并停止。鼠标移到想要的方向后按技能键。手机可点击地面或敌人，点击技能后再点地面施放。</p><p><b>Q 破风斩：</b>朝鼠标方向挥剑，造成扇形伤害。<br><b>W 坚毅壁垒：</b>获得持续 3 秒的护盾。<br><b>E 逐影突进：</b>向鼠标方向突进并伤害沿途敌人。<br><b>R 天坠裁决：</b>跃向指定区域，短暂预警后造成范围伤害和减速。</p><p>你控制苍锋，四名友方 AI 和五名敌方 AI 会自主推进、施法、撤退和复活。双方持续派出小兵。附近敌方单位阵亡可获得经验，亲手击杀可获得金币。英雄 3 级开局，最高 18 级；普通升级获得技能点，点击技能上方 ＋ 或 Shift+技能键加点。Q/W/E 最高 5 级，R 在 6/11/16 级可分别提升至 1/2/3 级。海克斯只在开局和 7、11、15 级触发；按 B 在己方泉水购买装备。阵亡后会在泉水复活。</p><p>先摧毁红方防御塔，再攻击水晶。己方水晶被摧毁则失败。防御塔优先攻击小兵，但你在塔下伤害敌方英雄时会被锁定。泉水可恢复生命与法力。</p></dialog>
-<dialog id="shop-dialog"><button class="close" id="close-shop">×</button><p class="eyebrow">THE ARMORY</p><h2>泉水装备商店</h2><p id="shop-note"></p><div id="shop-items"></div><p>每种装备最多购买三次，效果持续本局。</p></dialog><script type="module" src="boot.js"></script></body></html>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#080f19">
+  <title>海克斯大乱斗 · 凛冬长桥</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="game-header">
+    <a href="./" class="brand" aria-label="海克斯大乱斗首页">
+      <span class="brand-mark" aria-hidden="true">⬡</span>
+      <div>海克斯大乱斗<small>HEXTECH · ARAM</small></div>
+    </a>
+    <div class="match-title"><span class="live-dot"></span>凛冬长桥 <span class="header-divider">/</span> 5V5 英雄竞技</div>
+    <nav class="header-actions" aria-label="游戏操作">
+      <button id="help">操作指南 <kbd>?</kbd></button>
+      <button id="pause">Ⅱ 暂停</button>
+    </nav>
+  </header>
+
+  <main>
+    <div class="scoreboard" aria-label="比赛比分">
+      <span class="blue"><span class="team-name">蓝方</span><b id="blue-score">0</b></span>
+      <div class="match-time"><span class="score-label">凛冬长桥</span><span id="clock">00:00</span></div>
+      <span class="red"><b id="red-score">0</b><span class="team-name">红方</span></span>
+      <span id="objective">带领小兵推进，摧毁敌方水晶</span>
+    </div>
+
+    <section class="game-shell" aria-label="对战战场">
+      <div class="viewport">
+        <canvas id="arena" tabindex="0" aria-label="英雄对战地图，右键移动或攻击，QWER施放技能"></canvas>
+        <div class="battle-vignette" aria-hidden="true"></div>
+        <div class="map-label">THE FROSTBOUND BRIDGE<span>凛冬长桥 <i>单路战场</i></span></div>
+        <div id="toast" role="status"></div>
+        <div id="target-info"></div>
+
+        <div id="overlay" class="overlay">
+          <div class="welcome welcome--launch">
+            <div class="launch-copy">
+              <span class="badge"><span class="live-dot"></span>5 对 5 · 英雄竞技</span>
+              <p class="launch-eyebrow">THE FROSTBOUND BRIDGE</p>
+              <h1>破局，<br><em>由你执剑。</em></h1>
+              <p class="launch-description">踏入凛冬长桥，与四名队友并肩作战。<br>驾驭海克斯的力量，击破敌方水晶。</p>
+              <div class="launch-rules"><span><b>5<span>V</span>5</b>完整英雄阵容</span><span><b>18<small>级</small></b>成长与技能加点</span><span><b>4<small>轮</small></b>海克斯强化</span></div>
+              <button id="start" class="primary" disabled>正在加载 3D 战场…</button>
+              <small class="welcome-controls"><kbd>右键</kbd> 移动 / 攻击 <span>·</span> <kbd>Q W E R</kbd> 施放技能</small>
+            </div>
+            <div class="launch-hero">
+              <div class="hero-frame">
+                <svg class="hero-sigil" viewBox="0 0 280 300" fill="none" aria-hidden="true"><path d="M140 8 266 81v138L140 292 14 219V81Z"/><path d="m140 25 111 65v120l-111 65L29 210V90Z"/><path d="M140 0v45M140 255v45M0 150h45M235 150h45"/><circle cx="140" cy="150" r="87"/><path d="m140 48 8 15-8 15-8-15ZM140 222l8 15-8 15-8-15Z"/></svg>
+                <div class="hero-preview"><img id="welcome-hero-portrait" alt="苍锋的 3D 英雄模型"></div>
+                <span class="hero-class">THE VANGUARD</span>
+                <strong class="hero-name">苍 锋</strong>
+                <span class="hero-subtitle">近战战士 · 持剑破阵</span>
+              </div>
+              <div class="hero-abilities"><span>破风斩<kbd>Q</kbd></span><span>坚毅壁垒<kbd>W</kbd></span><span>逐影突进<kbd>E</kbd></span><span>天坠裁决<kbd>R</kbd></span></div>
+              <p class="hero-footnote">你控制英雄 · 九名 AI 自主作战</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="camera-tools"><span>战场视角</span><button id="zoom-out" title="拉远视角" aria-label="拉远视角">−</button><button id="zoom-in" title="拉近查看模型" aria-label="拉近查看模型">＋</button><small><kbd>空格</kbd> 跟随英雄</small></div>
+        <div class="touch-controls"><button id="touch-attack">攻击</button></div>
+      </div>
+
+      <div class="battle-hud">
+        <div class="champion-card">
+          <div class="portrait"><span id="level">3</span></div>
+          <div class="vitals">
+            <div class="name-line"><b>苍锋 <small>THE VANGUARD</small></b><span id="kda">0 / 0 / 0</span></div>
+            <div class="health-track"><i id="hp-bar"></i><span id="hp-text">850 / 850</span></div>
+            <div class="mana-track"><i id="mana-bar"></i><span id="mana-text">350 / 350</span></div>
+            <div class="xp-track"><i id="xp-bar"></i></div>
+            <small id="experience-text" class="experience-text"></small>
+          </div>
+        </div>
+        <div id="skills" class="skills" aria-label="英雄技能"></div>
+        <div class="economy"><span class="gold">◈ <b id="gold">0</b></span><span>补刀 <b id="cs">0</b></span><button id="shop">装备商店 <kbd>B</kbd></button></div>
+        <div class="minimap-frame"><span>战术地图</span><canvas id="minimap" width="200" height="112" aria-label="战场小地图"></canvas></div>
+      </div>
+    </section>
+
+    <details class="intel-panel roster-panel">
+      <summary><span class="intel-symbol">⚑</span> 双方阵容 <span class="detail-arrow">⌄</span></summary>
+      <section class="teams-panel" aria-label="双方英雄阵容">
+        <div class="team-roster blue-roster"><div class="roster-heading">蓝方阵容 <span id="blue-alive">5 / 5 存活</span></div><div id="blue-roster" class="roster-cards"></div></div>
+        <div class="team-roster red-roster"><div class="roster-heading">红方阵容 <span id="red-alive">5 / 5 存活</span></div><div id="red-roster" class="roster-cards"></div></div>
+        <p class="panel-hint">点击英雄头像，查看战场位置</p>
+      </section>
+    </details>
+    <details class="intel-panel hex-panel">
+      <summary><span class="intel-symbol">⬡</span> 海克斯构筑 <span id="augment-count">0 / 4 已选择</span><span class="detail-arrow">⌄</span></summary>
+      <section class="build-row">
+        <div><p class="eyebrow">HEXTECH AUGMENTS</p><h2>每一次强化，改变战局</h2><p id="augment-status" class="augment-status"></p></div>
+        <div class="augment-milestones" aria-label="海克斯触发等级"><span>开局</span><i></i><span>7 级</span><i></i><span>11 级</span><i></i><span>15 级</span></div>
+        <div id="augment-list"><span class="empty">开局、7、11、15 级解锁强化。<br>选择属于你的四轮海克斯构筑。</span></div>
+      </section>
+    </details>
+
+    <div class="below"><span><kbd>右键</kbd> 移动 / 攻击 <kbd>Q W E R</kbd> 技能 <kbd>S</kbd> 停止 <kbd>P</kbd> 暂停</span><span id="order">等待出战</span></div>
+    <footer>原创英雄竞技 · 非官方游戏</footer>
+  </main>
+
+  <dialog id="help-dialog"><button class="close" id="close-help" aria-label="关闭操作指南">×</button><p class="eyebrow">HOW TO PLAY</p><h2>控制英雄，赢下这条路</h2><p><b>右键地面</b>移动，<b>右键敌人</b>锁定普攻，超出攻击距离会追击。左键选中目标，<b>S</b>取消攻击并停止。鼠标移到想要的方向后按技能键。手机可点击地面或敌人，点击技能后再点地面施放。</p><p><b>Q 破风斩：</b>朝鼠标方向挥剑，造成扇形伤害。<br><b>W 坚毅壁垒：</b>获得持续 3 秒的护盾。<br><b>E 逐影突进：</b>向鼠标方向突进并伤害沿途敌人。<br><b>R 天坠裁决：</b>跃向指定区域，短暂预警后造成范围伤害和减速。</p><p>你控制苍锋，四名友方 AI 和五名敌方 AI 会自主推进、施法、撤退和复活。双方持续派出小兵。附近敌方单位阵亡可获得经验，亲手击杀可获得金币。英雄 3 级开局，最高 18 级；普通升级获得技能点，点击技能上方 ＋ 或 Shift+技能键加点。Q/W/E 最高 5 级，R 在 6/11/16 级可分别提升至 1/2/3 级。海克斯只在开局和 7、11、15 级触发；按 B 在己方泉水购买装备。阵亡后会在泉水复活。</p><p>先摧毁红方防御塔，再攻击水晶。己方水晶被摧毁则失败。防御塔优先攻击小兵，但你在塔下伤害敌方英雄时会被锁定。泉水可恢复生命与法力。</p></dialog>
+  <dialog id="shop-dialog"><button class="close" id="close-shop" aria-label="关闭装备商店">×</button><p class="eyebrow">THE ARMORY</p><h2>泉水装备商店</h2><p id="shop-note"></p><div id="shop-items"></div><p>每种装备最多购买三次，效果持续本局。</p></dialog>
+  <script type="module" src="boot.js"></script>
+</body>
+</html>
