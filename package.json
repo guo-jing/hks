@@ -1,1 +1,1 @@
-{"name":"hex-heroes","version":"2.0.0","private":true,"scripts":{"start":"python3 -m http.server 5173","check":"node --check game.js","test:browser":"node tests/browser-smoke.mjs"}}
+{"name":"hex-heroes","version":"2.1.0","private":true,"scripts":{"start":"python3 -m http.server 5173","check":"node --check game.js","test:browser":"node tests/browser-smoke.mjs"}}
