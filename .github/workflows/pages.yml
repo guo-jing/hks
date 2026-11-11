@@ -28,7 +28,7 @@ jobs:
       - name: Prepare static site
         run: |
           mkdir -p _site
-          cp index.html style.css game.js renderer.js boot.js models.js battlefield.js skill-indicators.js _site/
+          cp index.html style.css game.js renderer.js boot.js models.js battlefield.js skill-indicators.js combat-vfx.js _site/
           cp -r vendor _site/vendor
           touch _site/.nojekyll
       - name: Configure Pages
