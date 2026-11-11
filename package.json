@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "python3 -m http.server 5173",
-    "check": "node --check game.js && node --check renderer.js && node --check boot.js && node --check models.js && node --check battlefield.js",
+    "check": "node --check game.js && node --check renderer.js && node --check boot.js && node --check models.js && node --check battlefield.js && node --check skill-indicators.js",
     "test:browser": "node tests/browser-smoke.mjs",
     "vendor": "node scripts/vendor.mjs"
   },

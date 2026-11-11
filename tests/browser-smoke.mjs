@@ -47,6 +47,10 @@ try{
  await check('zoom preserves projected ground coordinates',"(()=>{$('zoom-in').click();const point=visual.worldToScreen(1200,650);const hit=visual.screenToWorld(point.x,point.y);const ok=Math.abs(hit.x-1200)<.01&&Math.abs(hit.y-650)<.01;$('zoom-out').click();return ok})()");
  await fresh();await js('game.player.x=245;game.player.y=600');
  await check('targeted melee pursuit and attack',"(()=>{const p=game.player,e=unit(1,'melee',450,600);e.speed=0;e.cd=999;game.units=[p,e];issue(e,e);for(let i=0;i<100;i++)update(.02);return p.x>300&&e.hp<e.maxHp})()");
+ await fresh();
+ await check('Q preview follows pointer and actual augmented range',"(()=>{armed='q';pointer.sx=null;pointer.x=game.player.x+100;pointer.y=game.player.y;draw();const v=visual.skillPreview;return v.key==='q'&&v.range===game.player.qRange&&Math.abs(v.angle)<.001})()");
+ await check('E preview endpoint matches terrain-clamped dash destination',"(()=>{armed='e';pointer.x=game.player.x+1000;pointer.y=1000;draw();const v=visual.skillPreview,point={x:Math.min(WORLD.w-65,pointer.x),y:WORLD.bottom-20},end=pointAlong(game.player,point,game.player.dashRange);return Math.hypot(v.end.x-end.x,v.end.y-end.y)<.001&&v.outOfRange})()");
+ await check('R preview flags unlearned ultimate and cancels cleanly',"(()=>{armed='r';draw();const ok=visual.skillPreview.blocked&&visual.skillPreview.range===skills.r.range;armed=null;previewSkill=null;draw();return ok&&visual.skillPreview===null})()");
  await fresh();await check('Q damages only aimed cone',"(()=>{const p=game.player;p.x=600;const a=unit(1,'hero',700,600),b=unit(1,'melee',500,600);game.units=[p,a,b];const mana=p.mana;cast('q',{x:800,y:600});return a.hp<a.maxHp&&b.hp===b.maxHp&&p.mana===mana-skills.q.cost&&p.cool.q>0})()");
  await check('cooldown prevents second Q',"(()=>{const mana=game.player.mana;return cast('q')===false&&game.player.mana===mana})()");
  await check('W shield absorbs incoming damage',"(()=>{const p=game.player;cast('w');const hp=p.hp,shield=p.shield;damage(p,50,game.rival);return p.hp===hp&&p.shield===shield-50})()");

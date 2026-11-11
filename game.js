@@ -4,7 +4,7 @@ const $ = id => document.getElementById(id);
 const canvas=$('arena'),mini=$('minimap'),mc=mini.getContext('2d');
 const visual=new BattleRenderer(canvas);
 const WORLD={w:2400,h:1200,top:325,bottom:875},pointer={x:700,y:600,sx:null,sy:null},view={w:1200,h:650,scale:1,zoom:1,x:0,y:0};
-let state='ready',game,last=0,animation,uid=0,toastTimer,selected=null,armed=null,coarse=matchMedia('(pointer:coarse)').matches;
+let state='ready',game,last=0,animation,uid=0,toastTimer,selected=null,armed=null,previewSkill=null,coarse=matchMedia('(pointer:coarse)').matches;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),living=u=>u&&u.hp>0&&!u.dead;
 const START_LEVEL=3,MAX_LEVEL=18,AUGMENT_LEVELS=[3,7,11,15],PASSIVE_XP=12;
 // League's per-level XP curve: 280, 380, ... 1880. ARAM begins at level 3.
@@ -185,6 +185,9 @@ function updateHUD(){updateTeams();const p=game.player;$('clock').textContent=`$
 }
 $('skills').insertAdjacentHTML('beforeend','<span id="skill-points" class="skill-points"></span>');
 for(const [k,s] of Object.entries(skills)){$('skills').insertAdjacentHTML('beforeend',`<div class="skill-slot"><button id="upgrade-${k}" class="skill-up" aria-label="升级${s.name}" title="升级 ${s.name}" hidden>＋</button><button id="skill-${k}" class="skill"><kbd>${k.toUpperCase()}</kbd><span class="icon">${s.icon}</span><small>${s.name}</small><span class="skill-ranks"></span><span class="cooldown" style="display:none"></span></button></div>`);
+ $('skill-'+k).addEventListener('pointerenter',e=>{if(e.pointerType!=='touch')previewSkill=k;});
+ $('skill-'+k).addEventListener('pointerleave',()=>{previewSkill=null;});
+ $('skill-'+k).addEventListener('blur',()=>{previewSkill=null;});
  $('upgrade-'+k).onclick=()=>{if(state==='playing')upgradeSkill(k);};
  $('skill-'+k).onclick=()=>{if(state!=='playing'||game.player.dead||!game.player.ranks[k])return;if(k==='w'){cast(k);return;}armed=armed===k?null:k;toast(armed?`选择施放位置：${s.name} · 点击地图施放，Esc 取消`:'已取消施法');updateHUD();};}
 
@@ -192,7 +195,7 @@ for(const [k,s] of Object.entries(skills)){$('skills').insertAdjacentHTML('befor
 function draw(){const p=game?.player;if(p&&game.cameraLocked){view.x=clamp(p.x-view.w/2,0,Math.max(0,WORLD.w-view.w));view.y=clamp(p.y-view.h/2,0,Math.max(0,WORLD.h-view.h));}
  visual.setView(view);
  if(pointer.sx!==null){const hit=visual.screenToWorld(pointer.sx,pointer.sy);pointer.x=hit.x;pointer.y=hit.y;}
- if(game){visual.render(game,{state,selected,armed,pointer,view,skills,world:WORLD});drawMinimap();}
+ if(game){visual.render(game,{state,selected,armed,previewSkill,pointer,view,skills,world:WORLD});drawMinimap();}
 }
 function drawMinimap(){const sx=mini.width/WORLD.w,sy=mini.height/WORLD.h;mc.setTransform(sx,0,0,sy,0,0);mc.fillStyle='#142c39';mc.fillRect(0,0,WORLD.w,WORLD.h);mc.fillStyle='#526876';mc.fillRect(50,325,2300,550);for(const u of game.units){if(!living(u))continue;mc.fillStyle=u.team===0?'#8fdfff':'#ff96a7';const r=u.kind==='hero'?43:u.kind==='tower'?55:u.kind==='core'?65:15;mc.beginPath();mc.arc(u.x,u.y,r,0,Math.PI*2);mc.fill();}mc.lineWidth=15;mc.strokeStyle='#f0e6c588';mc.strokeRect(view.x,view.y,view.w,view.h);}
 function resize(){const r=canvas.getBoundingClientRect();view.scale=(r.width<650?.68:1.08)*view.zoom;view.w=Math.min(WORLD.w,r.width/view.scale);view.h=Math.min(WORLD.h,r.height/view.scale);visual.resize(r.width,r.height);visual.setView(view);}

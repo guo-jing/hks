@@ -1,3 +1,4 @@
+import {drawSkillIndicators} from './skill-indicators.js';
 import {createHeroModel,createMinionModel,createStructureModel,animateHero} from './models.js';
 import {createBattlefield} from './battlefield.js';
 const B=globalThis.BABYLON;
@@ -18,9 +19,8 @@ export class BattleRenderer{
  for(const [f,m] of this.fx)if(!game.effects.includes(f)){m.dispose(false,true);this.fx.delete(f);}for(const f of game.effects){let m=this.fx.get(f);if(!m){m=this.ring(f.type,f.radius||60,f.color||'#8ee7e8');this.fx.set(f,m);}m.position.set(f.x,5,f.y);m.material.alpha=Math.max(0,f.life/f.maxLife)*.8;m.scaling.setAll(f.type==='blast'?1.5-f.life/f.maxLife:1);}
  for(let i=0;i<game.shots.length;i++){const s=game.shots[i];let m=this.shotPool[i];if(!m){m=B.MeshBuilder.CreateSphere('projectile',{diameter:9,segments:6},this.scene);m.material=new B.StandardMaterial('bolt',this.scene);m.material.emissiveColor=new B.Color3(.4,.85,1);m.isPickable=false;this.shotPool.push(m);}m.setEnabled(true);m.position.set(s.x,30,s.y);}for(let i=game.shots.length;i<this.shotPool.length;i++)this.shotPool[i].setEnabled(false);
  if(!this.marker)this.marker=this.ring('order',18,'#8cf5bf');this.marker.setEnabled(!!game.marker&&game.marker.life>0);if(game.marker)this.marker.position.set(game.marker.x,3,game.marker.y);
- if(!this.aim)this.aim=this.ring('aim',1,'#9ff4d9');this.aim.setEnabled(!!options.armed);if(options.armed){const p=game.player;this.aim.position.set(p.x,4,p.y);this.aim.scaling.setAll(options.armed==='q'?p.qRange:options.armed==='e'?p.dashRange:options.skills[options.armed].range);}
  this.scene.render();this.drawLabels(game,options);}
- drawLabels(game,{state}){const x=this.labelCtx,dpr=1;x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,this.width,this.height);
+ drawLabels(game,options){const {state}=options;const x=this.labelCtx,dpr=1;x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,this.width,this.height);drawSkillIndicators(this,game,options);
   for(const u of game.units){if(u.hp<=0||u.dead)continue;const model=this.entities.get(u),height=model?.metadata.height||80,p=this.worldToScreen(u.x,u.y,height),w=u.kind==='hero'?64:['tower','core'].includes(u.kind)?88:33;if(p.x<-100||p.x>this.width+100||p.y<-40||p.y>this.height+40)continue;
    x.fillStyle='#071421db';x.fillRect(p.x-w/2-2,p.y-2,w+4,8);x.fillStyle=u===game.player?'#8ce6a9':u.team===0?'#78cafa':'#ee809b';x.fillRect(p.x-w/2,p.y,w*Math.max(0,u.hp/u.maxHp),4);if(u.shield>0){x.fillStyle='#d5f1ff';x.fillRect(p.x-w/2,p.y+5,w*Math.min(1,u.shield/u.maxHp),2);}if(u.kind==='hero'){x.textAlign='center';x.font='600 10px system-ui';x.strokeStyle='#0b1e32';x.lineWidth=3;x.strokeText(`${u.name}  ${u.level}`,p.x,p.y-7);x.fillStyle='#e7f1fb';x.fillText(`${u.name}  ${u.level}`,p.x,p.y-7);}
   }
