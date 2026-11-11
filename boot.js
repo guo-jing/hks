@@ -5,6 +5,7 @@ try {
   window.BattleRenderer = BattleRenderer;
   const script = document.createElement('script');
   script.src = './game.js';
+  script.onload=()=>{const network=document.createElement('script');network.src='./multiplayer.js';document.body.append(network);};
   script.onerror = () => showFailure('游戏文件加载失败，请刷新页面重试。');
   document.body.append(script);
 } catch (error) {

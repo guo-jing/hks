@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: hex-heroes
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: node server/index.mjs
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 24

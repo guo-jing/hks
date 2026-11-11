@@ -36,7 +36,7 @@ export function createCombatEffect(scene,f){
  }else{
   a=ring(radius,5,4);b=ring(radius*.85,65,2,bright);c=sphere(radius,mist);c.position.y=48;c.scaling.y=1.5;particles(12);
  }
- function update(){const t=Math.max(0,Math.min(1,1-f.life/f.maxLife)),fade=1-t;
+ function update(age=0){const t=Math.max(0,Math.min(1,1-(f.life-age)/f.maxLife)),fade=1-t;
   root.position.set(f.follow&&f.source?f.source.x:f.x,0,f.follow&&f.source?f.source.y:f.y);
   bright.alpha=Math.min(1,fade*2.5);glow.alpha=Math.min(.9,fade*1.7);mist.alpha=.16*fade;
   if(f.type==='slash'){a.rotation.y=-(f.angle||0)+(.5-t)*.9;b.rotation.y=a.rotation.y+.12;a.scaling.setAll(.8+t*.3);b.scaling.setAll(.8+t*.3);}

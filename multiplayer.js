@@ -1,0 +1,39 @@
+'use strict';
+class HexMultiplayer{
+ constructor(){this.active=false;this.hero=null;this.socket=null;this.room='';this.units=new Map();this.effects=new Map();this.shots=new Map();}
+ send(command){if(this.socket?.readyState===WebSocket.OPEN)this.socket.send(JSON.stringify(command));}
+ leave(){this.active=false;$('network-status').textContent='单人对战';this.socket?.close();this.socket=null;$('room-status').textContent='已离开房间';$('leave-room').hidden=true;}
+ join(url,room,name){this.leave();let endpoint;try{endpoint=new URL(url);if(!['ws:','wss:'].includes(endpoint.protocol))throw Error();}catch{throw Error('请输入 ws:// 或 wss:// 开头的服务器地址');}endpoint.pathname='/ws';endpoint.search='';endpoint.hash='';
+ const ws=this.socket=new WebSocket(endpoint);$('room-status').textContent='正在连接…';$('join-room').disabled=true;const timer=setTimeout(()=>{if(!this.active){ws.close();$('room-status').textContent='连接超时，请检查服务器地址';$('join-room').disabled=false;}},8000);
+ ws.onopen=()=>ws.send(JSON.stringify({type:'join',room,name}));
+ ws.onmessage=e=>{if(this.socket!==ws)return;const m=JSON.parse(e.data);if(m.type==='error'){$('room-status').textContent=m.message;$('join-room').disabled=false;if(!this.active)ws.close();return;}
+ if(m.type==='joined'){clearTimeout(timer);this.active=true;this.hero=m.hero;this.room=m.room;this.units.clear();this.effects.clear();this.shots.clear();this.rosterKey='';this.choiceKey='';reset();state='playing';$('overlay').classList.add('hidden');$('leave-room').hidden=false;$('join-room').disabled=false;$('room-dialog').close();$('order').textContent='多人对战 · 右键移动 / 攻击';const share=new URL(location.href);share.searchParams.set('room',m.room);share.searchParams.set('server',endpoint.origin);$('invite-room').href=share.href;$('invite-room').hidden=false;toast('已加入房间 '+m.room+' · 空位由 AI 补齐');}
+ if(m.type==='snapshot'&&this.active)this.apply(m);
+ };
+ ws.onerror=()=>{$('room-status').textContent='无法连接对战服务器，请检查地址与服务状态';};
+ ws.onclose=()=>{clearTimeout(timer);if(this.socket!==ws)return;$('join-room').disabled=false;if(this.active){this.active=false;state='paused';$('leave-room').hidden=true;$('overlay').innerHTML='<div class="welcome"><h1>与房间断开连接</h1><p>你的英雄已由 AI 接管。可重新加入房间，或返回单人对战。</p><button class="primary" id="offline-return">返回单人对战</button></div>';$('overlay').classList.remove('hidden');$('offline-return').onclick=start;}if(!$('room-status').textContent.includes('房间已满')&&!$('room-status').textContent.includes('连接')&&!$('room-status').textContent.includes('已结束'))$('room-status').textContent='连接已关闭，可重新加入';};
+ }
+ apply(s){
+ const ids=new Set(s.units.map(u=>u.id));for(const id of this.units.keys())if(!ids.has(id))this.units.delete(id);
+ for(const u of s.units){let object=this.units.get(u.id);if(!object){object={};this.units.set(u.id,object);}const dt=Math.min(1,(performance.now()-(object.netAt||0))/100),from=object.netFrom?{x:object.netFrom.x+(object.x-object.netFrom.x)*dt,y:object.netFrom.y+(object.y-object.netFrom.y)*dt}:{x:object.x??u.x,y:object.y??u.y};Object.assign(object,u,{netFrom:Math.hypot(u.x-from.x,u.y-from.y)>500?{x:u.x,y:u.y}:from,netAt:performance.now()});}
+ const units=[...this.units.values()];for(const u of units){u.target=this.units.get(u.target);if(u.order?.target)u.order={...u.order,target:this.units.get(u.order.target)};}
+ const p=this.units.get(this.hero);if(!p)return;
+ const hydrate=(records,cache)=>{const alive=new Set();const result=records.map(raw=>{alive.add(raw.netId);let f=cache.get(raw.netId);if(!f){f={};cache.set(raw.netId,f);}Object.assign(f,raw,{source:this.units.get(raw.source)});if(raw.target)f.target=this.units.get(raw.target);return f;});for(const id of cache.keys())if(!alive.has(id))cache.delete(id);return result;};
+ const cameraLocked=game.cameraLocked;Object.assign(game,{time:s.time,networkAt:performance.now(),units,heroes:units.filter(u=>u.kind==='hero'),player:p,rival:units.find(u=>u.kind==='hero'&&u.team!==p.team),score:s.score,gold:p.gold,cs:p.cs,kills:p.kills,deaths:p.deaths,assists:p.assists,items:p.items,chosen:Object.fromEntries(p.augmentHistory.map(a=>[a.id,1])),effects:hydrate(s.effects,this.effects),shots:hydrate(s.shots,this.shots),texts:s.texts,cameraLocked});
+ if(selected)selected=this.units.get(selected.id);
+ const rosterKey=game.heroes.map(h=>h.id+':'+h.human+':'+h.nickname).join('|');if(rosterKey!==this.rosterKey){renderTeams();this.rosterKey=rosterKey;document.querySelector('.name-line b').textContent=p.name+' · '+roles[p.role].label;}
+ state=s.state==='ended'?'ended':'playing';updateHUD();renderAugments();for(const h of game.heroes){const card=$('roster-'+h.id);card.querySelector('strong').textContent=h.name+(h===p?' · 你':h.human?' · 真人':' · AI');card.title=h.human?h.nickname+' · '+roles[h.role].label:'AI · '+roles[h.role].label;}
+ const humans=game.heroes.filter(h=>h.human).length;$('room-status').textContent=`${this.room} · 真人 ${humans}/10 · AI ${10-humans}`;$('network-status').textContent=`房间 ${this.room} · ${humans} 人 + ${10-humans} AI`;
+ if(state==='ended'){armed=null;const own=game.units.find(u=>u.kind==='core'&&u.team===p.team);$('overlay').innerHTML='<div class="welcome"><h1>'+(own?.hp>0?'胜利':'本局结束')+'</h1><p>换个房间码即可开始新的对局。</p><button class="primary" id="network-again">返回单人 / 重新组队</button></div>';$('overlay').classList.remove('hidden');$('network-again').onclick=start;return;}
+ const key=(p.choices||[]).join(',');if(key!==this.choiceKey){this.choiceKey=key;if(key){$('overlay').innerHTML='<div class="choices"><h2>选择海克斯强化</h2><p>多人战场持续进行，选择后立即生效。</p><div class="choice-grid">'+p.choices.map(id=>{const a=augments.find(a=>a.id===id);return `<button class="choice" data-augment="${id}"><span class="symbol">${a.symbol}</span><strong>${a.name}</strong><p>${a.desc}</p></button>`;}).join('')+'</div></div>';$('overlay').classList.remove('hidden');$('overlay').querySelectorAll('[data-augment]').forEach(b=>b.onclick=()=>{this.send({type:'augment',id:b.dataset.augment});$('overlay').classList.add('hidden');});}else $('overlay').classList.add('hidden');}
+ }
+ shop(){const p=game.player,home=Math.hypot(p.x-(p.team===0?150:2250),p.y-600)<230&&!p.dead;$('shop-note').textContent=home?'购买期间对战继续进行':'请先返回己方泉水';$('shop-items').innerHTML=items.map(i=>`<button data-buy="${i.id}" class="shop-item" ${!home||p.gold<i.cost||(p.items[i.id]||0)>=3?'disabled':''}><span>${i.icon}</span><b>${i.name}</b><small>${i.cost} 金币 · 已购 ${p.items[i.id]||0}/3</small></button>`).join('');$('shop-items').querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{this.send({type:'buy',id:b.dataset.buy});b.disabled=true;});$('shop-dialog').showModal();}
+}
+multiplayer=new HexMultiplayer();
+const query=new URLSearchParams(location.search),localServer=location.hostname==='localhost'||location.hostname==='127.0.0.1';
+$('server-url').value=query.get('server')||window.HEX_SERVER_URL||(localServer||!location.hostname.endsWith('github.io')?(location.protocol==='https:'?'wss://':'ws://')+location.host:'');
+$('room-code').value=(query.get('room')||Array.from(crypto.getRandomValues(new Uint8Array(3)),v=>v.toString(16).padStart(2,'0')).join('')).toUpperCase();
+$('multiplayer-open').onclick=()=>$('room-dialog').showModal();$('close-room').onclick=()=>$('room-dialog').close();
+$('join-room').onclick=()=>{try{multiplayer.join($('server-url').value.trim(),$('room-code').value.trim().toUpperCase(),$('player-name').value.trim());}catch(e){$('room-status').textContent=e.message;}};
+$('leave-room').onclick=()=>{multiplayer.leave();$('network-status').textContent='单人对战';start();};
+if(query.has('room'))$('room-dialog').showModal();

@@ -1,14 +1,21 @@
 {
   "name": "hex-heroes",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "private": true,
   "scripts": {
-    "start": "python3 -m http.server 5173",
-    "check": "node --check game.js && node --check renderer.js && node --check boot.js && node --check models.js && node --check battlefield.js && node --check skill-indicators.js && node --check combat-vfx.js",
+    "start": "node server/index.mjs",
+    "check": "node --check game.js && node --check renderer.js && node --check boot.js && node --check models.js && node --check battlefield.js && node --check skill-indicators.js && node --check combat-vfx.js && node --check multiplayer.js && node --check server/index.mjs && node --check server/simulation.mjs",
     "test:browser": "node tests/browser-smoke.mjs",
-    "vendor": "node scripts/vendor.mjs"
+    "vendor": "node scripts/vendor.mjs",
+    "start:static": "python3 -m http.server 5173",
+    "test:multiplayer": "node tests/multiplayer.mjs",
+    "test:browser:multiplayer": "node tests/browser-multiplayer.mjs"
   },
   "dependencies": {
-    "babylonjs": "8.38.0"
+    "babylonjs": "8.38.0",
+    "ws": "8.18.3"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }
