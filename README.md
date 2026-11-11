@@ -9,3 +9,11 @@
 - 支持触屏摇杆和技能按钮，最高击败数保存在当前浏览器。
 
 `npm run check` 检查 JavaScript 语法。游戏为原创原型，不使用官方角色、素材或联网服务。字体加载失败时自动使用系统字体。
+
+## GitHub Pages 部署
+
+在仓库 Settings → Pages → Build and deployment 中，将 Source 设为 **GitHub Actions**。
+首次启用后，在 Actions 中选择 **Deploy game to GitHub Pages** → **Run workflow**，选择 `main` 分支运行。
+之后每次推送到 `main` 都会自动检查并部署。发布产物仅包含游戏页面、样式和脚本。
+
+部署成功后的地址：https://guo-jing.github.io/hks/
