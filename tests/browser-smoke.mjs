@@ -15,6 +15,8 @@ async function fresh(){await js("start();cancelAnimationFrame(animation);game.sp
 try{
  await send('Runtime.enable');await send('Page.enable');await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});await send('Page.navigate',{url:process.env.GAME_URL||'http://localhost:5173/'});await new Promise(r=>setTimeout(r,700));
  await check('initial champion select and four skills',"state==='ready' && document.querySelectorAll('.skill').length===4");await fresh();
+ await check('WebGL 2 renderer and real shadowed meshes',"(()=>{draw();let meshes=0;visual.entities.get(game.player).traverse(o=>{if(o.isMesh)meshes++});return visual.renderer.isWebGLRenderer&&visual.renderer.shadowMap.enabled&&meshes>30&&visual.renderer.info.render.triangles>20000&&visual.renderer.getContext().getError()===0})()");
+ await check('all ten portraits come from 3D models',"visual.portraits.size===10&&[...document.querySelectorAll('.role-portrait')].every(img=>img.src.startsWith('data:image/png'))");
  await check('exact 5v5 roster with one player and nine bots',"game.heroes.length===10&&game.heroes.filter(h=>h.team===0).length===5&&game.heroes.filter(h=>h.team===1).length===5&&game.heroes.filter(h=>h!==game.player).length===9&&new Set(game.heroes.map(h=>h.name)).size===10&&document.querySelectorAll('.roster-card').length===10");
  await check('five combat roles per team',"[0,1].every(team=>new Set(game.heroes.filter(h=>h.team===team).map(h=>h.role)).size===5)");
  await check('all nine bots advance without controlling player',"(()=>{const positions=game.heroes.map(h=>h.x);for(let i=0;i<80;i++)update(.02);return game.player.x===245&&game.heroes.every((h,i)=>h===game.player||(h.team===0?h.x>positions[i]+40:h.x<positions[i]-40))})()");
@@ -32,12 +34,17 @@ try{
  await fresh();await check('symmetric bot level scaling',"game.time=41;update(.02);game.heroes.filter(h=>h!==game.player).every(h=>h.level===2)&&game.player.level===1");
  await fresh();
  await check('no unsolicited auto attacks',"(()=>{const p=game.player,e=unit(1,'hero',p.x+60,p.y);game.units=[p,e];e.speed=0;e.cd=999;const hp=e.hp;for(let i=0;i<30;i++)update(.02);return e.hp===hp&&p.order===null})()");
- await fresh();await js('draw()');const point=await js("(()=>{const r=canvas.getBoundingClientRect();return{x:r.left+(480-view.x)*view.scale,y:r.top+(620-view.y)*view.scale}})()");
+ await fresh();await js('draw()');const point=await js("(()=>{const r=canvas.getBoundingClientRect();const p=visual.worldToScreen(480,620);return{x:r.left+p.x,y:r.top+p.y}})()");
  await send('Input.dispatchMouseEvent',{type:'mousePressed',x:point.x,y:point.y,button:'right',clickCount:1});await send('Input.dispatchMouseEvent',{type:'mouseReleased',x:point.x,y:point.y,button:'right',clickCount:1});
- await check('actual right-click issues move order',"game.player.order?.type==='move' && Math.abs(game.player.order.x-480)<2");
+ await check('actual right-click issues move order',"game.player.order?.type==='move' && Math.abs(game.player.order.x-480)<2&&Math.abs(game.player.order.y-620)<2");
  await check('movement follows destination',"(()=>{const x=game.player.x;update(.1);return game.player.x>x})()");
  await check('S cancels move and attack',"window.dispatchEvent(new KeyboardEvent('keydown',{key:'s'}));game.player.order===null && game.player.target===null");
- await fresh();await check('click hit tests tower and hero silhouettes',"pick({x:1750,y:520})?.kind==='tower' && pick({x:245,y:555})===game.player");
+ await fresh();await check('3D raycasting hits tower and hero models',"(()=>{draw();const t=visual.worldToScreen(650,600,70),p=visual.worldToScreen(245,600,50);return visual.pick(t.x,t.y)===towerFor(0)&&visual.pick(p.x,p.y)===game.player})()");
+ await fresh();await js('game.player.x=1150;game.rival.x=1320;game.rival.y=620;draw()');const enemyPoint=await js("(()=>{const r=canvas.getBoundingClientRect(),p=visual.worldToScreen(game.rival.x,game.rival.y,50);return{x:r.left+p.x,y:r.top+p.y}})()");
+ await send('Input.dispatchMouseEvent',{type:'mousePressed',...enemyPoint,button:'right',clickCount:1});await send('Input.dispatchMouseEvent',{type:'mouseReleased',...enemyPoint,button:'right',clickCount:1});
+ await check('actual right-click on 3D enemy locks attack',"game.player.order?.type==='attack'&&game.player.order.target===game.rival");
+ await check('zoom preserves projected ground coordinates',"(()=>{$('zoom-in').click();const point=visual.worldToScreen(1200,650);const hit=visual.screenToWorld(point.x,point.y);const ok=Math.abs(hit.x-1200)<.01&&Math.abs(hit.y-650)<.01;$('zoom-out').click();return ok})()");
+ await fresh();await js('game.player.x=245;game.player.y=600');
  await check('targeted melee pursuit and attack',"(()=>{const p=game.player,e=unit(1,'melee',450,600);e.speed=0;e.cd=999;game.units=[p,e];issue(e,e);for(let i=0;i<100;i++)update(.02);return p.x>300&&e.hp<e.maxHp})()");
  await fresh();await check('Q damages only aimed cone',"(()=>{const p=game.player;p.x=600;const a=unit(1,'hero',700,600),b=unit(1,'melee',500,600);game.units=[p,a,b];cast('q',{x:800,y:600});return a.hp<a.maxHp&&b.hp===b.maxHp&&p.mana===265&&p.cool.q>0})()");
  await check('cooldown prevents second Q',"(()=>{const mana=game.player.mana;return cast('q')===false&&game.player.mana===mana})()");
@@ -63,6 +70,8 @@ try{
  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});await new Promise(r=>setTimeout(r,200));await js('draw()');
  await check('mobile layout fits viewport','document.documentElement.scrollWidth<=innerWidth');
  await check('touch skill arms directional cast',"$('skill-e').click();armed==='e'");
+ await check('touch directional cast uses 3D ground ray',"(()=>{const p=game.player,goal={x:p.x+120,y:p.y+40},screen=visual.worldToScreen(goal.x,goal.y),rect=canvas.getBoundingClientRect();canvas.dispatchEvent(new PointerEvent('pointerdown',{clientX:rect.left+screen.x,clientY:rect.top+screen.y,pointerType:'touch',button:0,bubbles:true}));return Math.abs(p.x-goal.x)<1&&Math.abs(p.y-goal.y)<1&&armed===null})()");
+ await js('draw()');
  await writeFile('/tmp/hex-moba-mobile.png',Buffer.from((await send('Page.captureScreenshot',{format:'png'})).data,'base64'));
  assert.equal(errors.length,0,JSON.stringify(errors));console.log('PASS no browser runtime exceptions');
 }finally{ws.close();}

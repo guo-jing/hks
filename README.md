@@ -1,6 +1,15 @@
 # 海克斯大乱斗 · 英雄对决
 
-原创的俯视角单路 5V5 英雄竞技原型。操控近战剑士「苍锋」，与四名电脑队友并肩对抗五名敌方电脑英雄，摧毁敌方水晶获胜。无框架、无第三方运行时依赖，所有角色和场景由 Canvas 绘制。
+原创的俯视角 3D 单路 5V5 英雄竞技原型。操控近战剑士「苍锋」，与四名电脑队友并肩对抗五名敌方电脑英雄，摧毁敌方水晶获胜。
+
+## 3D 画面
+
+- 使用 Three.js / WebGL 2，原创程序化建模；模型拥有真实体积、材质与光照。
+- 五种职业有独立的铠甲、披风、头饰与武器：发光剑刃、盾牌、长弓、法杖及治疗者光环。
+- 英雄具有行走、转向、挥击和护盾动画；阵容头像直接由同一套 3D 模型离屏渲染。
+- 长桥包含石砖凹凸材质、积雪城垛、桥墩、冰柱、雪松与峡谷；水晶、防御塔、技能和弹道有发光效果。
+- 使用正交俯视镜头、环境反射、实时柔和阴影及飘雪。滚轮或地图左下角的加减按钮可缩放。
+- 点击与技能落点通过相机射线计算，屏幕坐标和战斗坐标相互独立。
 
 ## 5V5 阵容
 
@@ -16,7 +25,9 @@
 
 ## 本地启动
 
-运行 `npm start`，打开 http://localhost:5173。也可直接打开 `index.html`。
+运行 `npm start`，打开 http://localhost:5173。请通过 HTTP 服务访问；ES 模块不能通过双击 `file://` 页面加载。需要支持 WebGL 2 的现代浏览器。
+
+Three.js 0.170.0 已随仓库放在 `vendor/`，运行游戏不依赖外部 CDN，也无需在线下载模型。引擎使用 MIT 许可，见 `vendor/THREE-LICENSE.txt`。维护依赖时运行 `npm ci` 后执行 `npm run vendor` 可重新生成引擎文件。
 
 ## 操作
 
@@ -32,6 +43,7 @@
 | S | 停止移动和攻击 |
 | 空格 | 镜头重新跟随英雄 |
 | 小地图左键 | 查看指定区域 |
+| 滚轮 / 地图上的 ＋、− | 拉近 / 拉远 3D 视角 |
 | B | 装备商店，需在己方泉水购买 |
 | P | 暂停 / 继续 |
 
@@ -50,11 +62,11 @@
 
 ## 检查
 
-`npm run check` 检查 JavaScript 语法。
-`node tests/browser-smoke.mjs` 使用本地 Chromium 的 DevTools 端口验证关键玩法，运行方法见该文件顶部。
+`npm run check` 检查游戏、渲染器和启动脚本语法。
+`npm run test:browser` 使用本地 Chromium 的 DevTools 端口验证 5V5、技能、计分和复活，并验证 WebGL 网格、3D 点击、相机缩放、触屏施法与三分钟对局模拟。运行方法见 `tests/browser-smoke.mjs` 顶部。无 GPU 的环境可使用 Chromium 的 SwiftShader 软件渲染。
 
 ## GitHub Pages
 
-仓库 Settings → Pages → Source 选择 **GitHub Actions**。首次启用后，在 Actions 里运行 **Deploy game to GitHub Pages**；之后推送到 `main` 自动发布。
+仓库 Settings → Pages → Source 选择 **GitHub Actions**。首次启用后，在 Actions 里运行 **Deploy game to GitHub Pages**；之后推送到 `main` 自动发布。工作流会一并上传游戏脚本、3D 渲染器和 `vendor/` 引擎文件，支持 `/hks/` 子路径。
 
 部署成功后地址：https://guo-jing.github.io/hks/

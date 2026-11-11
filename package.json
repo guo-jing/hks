@@ -1,1 +1,14 @@
-{"name":"hex-heroes","version":"2.1.0","private":true,"scripts":{"start":"python3 -m http.server 5173","check":"node --check game.js","test:browser":"node tests/browser-smoke.mjs"}}
+{
+  "name": "hex-heroes",
+  "version": "3.0.0",
+  "private": true,
+  "scripts": {
+    "start": "python3 -m http.server 5173",
+    "check": "node --check game.js && node --check renderer.js && node --check boot.js",
+    "test:browser": "node tests/browser-smoke.mjs",
+    "vendor": "node scripts/vendor.mjs"
+  },
+  "dependencies": {
+    "three": "0.170.0"
+  }
+}
