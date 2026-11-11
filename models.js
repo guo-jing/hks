@@ -292,19 +292,47 @@ export function createHeroModel(scene, role = 'fighter', team = 0) {
   return root;
 }
 
+// Skill poses use the simulation clock, shared with effect lifetimes. Reset every
+// joint before applying a pose so interrupted casts cannot leave a stuck limb.
 export function animateHero(root, unit, time) {
-  const d = root.metadata;
-  if (!d?.body) return;
-  d.body.rotation.y = Math.PI / 2 - unit.face;
-  d.body.position.y = Math.sin(unit.walk || 0) * .9;
-  for (let i = 0; i < (d.legs?.length || 0); i++) d.legs[i].rotation.x = Math.sin((unit.walk || 0) + i * Math.PI) * .33;
-  const swing = unit.attackAnim > 0 ? Math.sin(Math.min(1, unit.attackAnim / .28) * Math.PI) : 0;
-  for (let i = 0; i < (d.arms?.length || 0); i++) {
-    d.arms[i].rotation.x = i === 1 ? -swing * 1.25 : swing * .35;
-    d.arms[i].rotation.x += Math.sin((unit.walk || 0) + i * Math.PI) * .1;
+ const d=root.metadata;if(!d?.body)return;
+ const body=d.body,arms=d.arms,legs=d.legs,action=unit.action;
+ const active=action&&time-action.start>=0&&time-action.start<action.duration;
+ const t=active?Math.min(1,(time-action.start)/action.duration):0;
+ body.rotation.set(0,Math.PI/2-(active?action.face:unit.face),0);body.position.set(0,Math.sin(unit.walk||0)*.9,0);body.scaling.setAll(1);
+ for(let i=0;i<legs.length;i++)legs[i].rotation.set(Math.sin((unit.walk||0)+i*Math.PI)*.33,0,0);
+ const swing=unit.attackAnim>0?Math.sin(Math.min(1,unit.attackAnim/.28)*Math.PI):0;
+ for(let i=0;i<arms.length;i++)arms[i].rotation.set(i===1?-swing*1.25:swing*.35,0,0);
+ const pose=(left,right,lean=0,twist=0)=>{arms[0].rotation.set(...left);arms[1].rotation.set(...right);body.rotation.x=lean;body.rotation.y+=twist;};
+ if(active){
+  const fade=(1-t)**2;
+  switch(action.kind){
+   case 'slash': // Contact pose starts with the immediate Q damage, then follows through.
+    pose([-.6*fade,0,-.4*fade],[-1.4*fade,.9*fade,-1.3*fade],.22*fade,(-.8+1.6*t)*fade);legs[0].rotation.x=-.5*fade;legs[1].rotation.x=.45*fade;break;
+   case 'guard':
+    pose([-1.45*fade,0,-.35],[-.8*fade,0,.35*fade],-.12*fade);body.position.y-=5*fade;break;
+   case 'dash':{
+    pose([.9,0,-.4],[-1.65,0,.3],.65*Math.sin(Math.PI*(.2+.8*t)));legs[0].rotation.x=-.8;legs[1].rotation.x=.9;
+    const ease=1-(1-t)**3;root.position.x=action.from.x+(action.to.x-action.from.x)*ease;root.position.z=action.from.y+(action.to.y-action.from.y)*ease;body.position.y+=Math.sin(Math.PI*t)*9;break;
+   }
+   case 'leap':{
+    const crouch=Math.max(0,1-t/.18),flight=Math.max(0,(t-.18)/.82);
+    pose([-2.2*(1-crouch),0,-.25],[-2.65*(1-crouch),0,.3],-.2*Math.sin(t*Math.PI));
+    body.position.y=-12*crouch+Math.sin(flight*Math.PI)*145;legs[0].rotation.x=-.9*Math.sin(flight*Math.PI);legs[1].rotation.x=.65*Math.sin(flight*Math.PI);
+    root.position.x=action.from.x+(action.to.x-action.from.x)*flight;root.position.z=action.from.y+(action.to.y-action.from.y)*flight;break;
+   }
+   case 'land':pose([-1.1*fade,0,-.5*fade],[-1.8*fade,0,.5*fade],.55*fade);body.position.y=-16*fade;legs[0].rotation.x=-.6*fade;legs[1].rotation.x=.6*fade;break;
+   case 'shoot':pose([-1.5*fade,0,-.7*fade],[-1.25*fade,1.2*fade,.5*fade],.12*fade,-.45*fade);break;
+   case 'heal':pose([-1.7*fade,0,-.65*fade],[-2.2*fade,0,.35*fade],-.12*fade);body.position.y+=Math.sin(t*Math.PI)*7;break;
+   case 'release':pose([-1.1*fade,0,-.4*fade],[-1.4*fade,0,.35*fade],.2*fade);break;
+   case 'cast':{const charge=Math.sin(t*Math.PI*.8);pose([-1.1,0,-.4],[-1.5-charge,0,.35],-.15*charge);body.position.y+=charge*7;break;}
+   case 'slam':pose([-1.4*fade,0,-.3],[-2*fade,0,.6*fade],.5*fade);body.position.y-=10*fade;break;
+   case 'cleave':{const lift=t<.7?t/.7:Math.max(0,(1-t)/.3);pose([-.8,0,-.35],[-2.6*lift,0,.25],-.2*lift);break;}
   }
-  if (d.cape) { d.cape.rotation.x = -.05 + Math.sin(time * 2.6 + (unit.id || 0)) * .045; d.cape.rotation.z = Math.sin(time * 1.4 + (unit.id || 0)) * .025; }
-  if (d.shield) d.shield.setEnabled(unit.shield > 0);
+ }
+ if(d.cape){d.cape.rotation.x=-.05+Math.sin(time*2.6+(unit.id||0))*.045+(active&&action.kind==='dash'?.5:0);d.cape.rotation.z=Math.sin(time*1.4+(unit.id||0))*.025;}
+ if(d.shield)d.shield.setEnabled(unit.shield>0);
+ root.metadata.activeAction=active?action.kind:null;
 }
 
 export function createMinionModel(scene, caster, team) {
