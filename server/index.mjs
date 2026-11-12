@@ -8,9 +8,11 @@ import {fileURLToPath} from 'node:url';
 import {WebSocketServer,WebSocket} from 'ws';
 import {createSimulation,snapshot} from './simulation.mjs';
 export function createGameServer(){
+ const attempts=new Map();
+ function track(req,details){try{const id=new URL(req.url,'http://localhost').searchParams.get('attempt');if(!id||! /^[a-zA-Z0-9-]{1,64}$/.test(id))return;if(!attempts.has(id)&&attempts.size>=200)attempts.delete(attempts.keys().next().value);attempts.set(id,{...attempts.get(id),...details});}catch{}}
  const sessions=new Map();
  const rooms=new Map(),root=new URL('../',import.meta.url);
- const server=http.createServer(async(req,res)=>{const path=new URL(req.url,'http://localhost').pathname;if(path==='/health'||path.startsWith('/api/')){res.setHeader('Access-Control-Allow-Origin','*');res.setHeader('Access-Control-Allow-Methods','POST, GET, OPTIONS');res.setHeader('Access-Control-Allow-Headers','Content-Type');res.setHeader('Cache-Control','no-store');if(req.method==='OPTIONS'){res.writeHead(204);res.end();return;}}if(path.startsWith('/api/')){await api(req,res,path);return;}if(path==='/health'){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({ok:true,version,rooms:rooms.size}));return;}if(!/^\/(?:|index.html|[\w-]+\.(?:js|css)|vendor\/[\w.-]+)$/.test(path)){res.writeHead(404);res.end();return;}try{const data=await readFile(fileURLToPath(new URL(path==='/'?'index.html':'.'+path,root)));res.writeHead(200,{'Content-Type':path.endsWith('.js')?'text/javascript':path.endsWith('.css')?'text/css':'text/html','Cache-Control':'no-cache'});res.end(data);}catch{res.writeHead(404);res.end();}});
+ const server=http.createServer(async(req,res)=>{const path=new URL(req.url,'http://localhost').pathname;if(path==='/health'||path.startsWith('/api/')){res.setHeader('Access-Control-Allow-Origin','*');res.setHeader('Access-Control-Allow-Methods','POST, GET, OPTIONS');res.setHeader('Access-Control-Allow-Headers','Content-Type');res.setHeader('Cache-Control','no-store');if(req.method==='OPTIONS'){res.writeHead(204);res.end();return;}}if(path.startsWith('/api/')){await api(req,res,path);return;}if(path==='/health'){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({ok:true,version,rooms:rooms.size,wsPath:'/ws',handshake:attempts.get(new URL(req.url,'http://localhost').searchParams.get('attempt'))||null}));return;}if(!/^\/(?:|index.html|[\w-]+\.(?:js|css)|vendor\/[\w.-]+)$/.test(path)){res.writeHead(404);res.end();return;}try{const data=await readFile(fileURLToPath(new URL(path==='/'?'index.html':'.'+path,root)));res.writeHead(200,{'Content-Type':path.endsWith('.js')?'text/javascript':path.endsWith('.css')?'text/css':'text/html','Cache-Control':'no-cache'});res.end(data);}catch{res.writeHead(404);res.end();}});
  const wss=new WebSocketServer({server,path:'/ws',maxPayload:2048});
  const send=(ws,m)=>{if(ws.readyState===WebSocket.OPEN&&ws.bufferedAmount<1024*1024)ws.send(JSON.stringify(m));};
  function leave(ws){if(!ws.room)return;const r=ws.room;r.sim.release(ws.hero);r.clients.delete(ws);ws.room=null;r.emptySince=Date.now();}
@@ -22,7 +24,8 @@ export function createGameServer(){
  if(['cast','upgrade'].includes(c.type)&&!['q','w','e','r'].includes(c.key))return;
  if(['order','cast','stop','augment','upgrade','buy'].includes(c.type))ws.room.sim.command(ws.hero,c);
  }catch{send(ws,{type:'error',message:'请求无效，请重试'});}});}
- wss.on('connection',attach);
+ server.on('upgrade',(req)=>track(req,{upgradeSeenAt:new Date().toISOString(),path:new URL(req.url,'http://localhost').pathname,upgrade:req.headers.upgrade||'',connection:req.headers.connection||'',wsVersion:req.headers['sec-websocket-version']||''}));
+ wss.on('connection',(ws,req)=>{track(req,{acceptedAt:new Date().toISOString()});ws.on('close',(code,reason)=>track(req,{closedAt:new Date().toISOString(),closeCode:code,closeReason:reason.toString().slice(0,160)}));attach(ws);});
 
  async function api(req,res,path){
   const reply=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(data));};

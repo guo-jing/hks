@@ -42,6 +42,10 @@
 
 `npm run start:static` 仅启动静态单人版本。Babylon.js 已放在 `vendor/`，不依赖外部 CDN，许可见 `vendor/BABYLON-LICENSE.md`；执行 `npm run vendor` 可从固定版本依赖重新生成文件。
 
+### 连接诊断
+
+多人房间面板提供连接诊断与复制按钮，记录 WS 地址、耗时、error/close 事件、关闭码、关闭原因以及 HTTPS 回退。勾选「仅测试 WS」可停用回退。健康检查会按随机尝试编号返回对应的服务端 Upgrade / accepted / close 记录，帮助区分请求未到达服务端和服务端主动关闭；不包含昵称、房间码、会话令牌。浏览器不开放 WS 握手 HTTP 状态，日志不会把 1006 直接解释为特定故障。
+
 ### 公网部署
 
 **GitHub Pages 无法运行对战服务器。** 仓库提供 `render.yaml` 与 `Dockerfile`，可部署到支持常驻 Node.js 与 WebSocket 的服务。直接在服务器域名打开游戏会自动连接同域服务器，无需再配置地址。
