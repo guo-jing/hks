@@ -16,7 +16,7 @@
     </a>
     <div class="match-title"><span class="live-dot"></span>凛冬长桥 <span class="header-divider">/</span> 5V5 英雄竞技</div>
     <nav class="header-actions" aria-label="游戏操作">
-      <button id="multiplayer-open">多人对战</button><button id="leave-room" hidden>离开房间</button><span id="network-status"></span>
+      <button id="multiplayer-open" data-open-room>多人对战</button><button id="leave-room" hidden>离开房间</button><span id="network-status"></span>
       <button id="help">操作指南 <kbd>?</kbd></button>
       <button id="pause">Ⅱ 暂停</button>
     </nav>
@@ -46,7 +46,7 @@
               <h1>破局，<br><em>由你执剑。</em></h1>
               <p class="launch-description">踏入凛冬长桥，与四名队友并肩作战。<br>驾驭海克斯的力量，击破敌方水晶。</p>
               <div class="launch-rules"><span><b>5<span>V</span>5</b>完整英雄阵容</span><span><b>18<small>级</small></b>成长与技能加点</span><span><b>4<small>轮</small></b>海克斯强化</span></div>
-              <button id="start" class="primary" disabled>正在加载 3D 战场…</button>
+              <div class="launch-actions"><button id="launch-multiplayer" class="primary" data-open-room>多人对战 · 创建 / 加入房间</button><button id="start" class="secondary" disabled>正在加载 3D 战场…</button></div><small class="multiplayer-note">邀请朋友一起玩 · 空位自动补 AI · v5.0.2</small>
               <small class="welcome-controls"><kbd>右键</kbd> 移动 / 攻击 <span>·</span> <kbd>Q W E R</kbd> 施放技能</small>
             </div>
             <div class="launch-hero">
@@ -108,6 +108,6 @@
   <dialog id="help-dialog"><button class="close" id="close-help" aria-label="关闭操作指南">×</button><p class="eyebrow">HOW TO PLAY</p><h2>控制英雄，赢下这条路</h2><p><b>右键地面</b>移动，<b>右键敌人</b>锁定普攻，超出攻击距离会追击。左键选中目标，<b>S</b>取消攻击并停止。鼠标移到想要的方向后按技能键。手机可点击地面或敌人，点击技能后再点地面施放。</p><p><b>Q 破风斩：</b>朝鼠标方向挥剑，造成扇形伤害。<br><b>W 坚毅壁垒：</b>获得持续 3 秒的护盾。<br><b>E 逐影突进：</b>向鼠标方向突进并伤害沿途敌人。<br><b>R 天坠裁决：</b>跃向指定区域，短暂预警后造成范围伤害和减速。</p><p>你控制苍锋，四名友方 AI 和五名敌方 AI 会自主推进、施法、撤退和复活。双方持续派出小兵。附近敌方单位阵亡可获得经验，亲手击杀可获得金币。英雄 3 级开局，最高 18 级；普通升级获得技能点，点击技能上方 ＋ 或 Shift+技能键加点。Q/W/E 最高 5 级，R 在 6/11/16 级可分别提升至 1/2/3 级。海克斯只在开局和 7、11、15 级触发；按 B 在己方泉水购买装备。阵亡后会在泉水复活。</p><p>先摧毁红方防御塔，再攻击水晶。己方水晶被摧毁则失败。防御塔优先攻击小兵，但你在塔下伤害敌方英雄时会被锁定。泉水可恢复生命与法力。</p></dialog>
   <dialog id="shop-dialog"><button class="close" id="close-shop" aria-label="关闭装备商店">×</button><p class="eyebrow">THE ARMORY</p><h2>泉水装备商店</h2><p id="shop-note"></p><div id="shop-items"></div><p>每种装备最多购买三次，效果持续本局。</p></dialog>
   <script type="module" src="boot.js"></script>
-<dialog id="room-dialog" class="room-dialog"><button id="close-room" class="close" aria-label="关闭">×</button><h2>多人对战 · AI 补位</h2><p>相同服务器、相同房间码即可一起玩，最多 10 人。</p><label>对战服务器<input id="server-url" placeholder="wss://你的对战服务器" autocomplete="url"></label><label>玩家昵称<input id="player-name" maxlength="16" value="召唤师"></label><label>房间码<input id="room-code" maxlength="12" pattern="[A-Za-z0-9]{4,12}" autocomplete="off"></label><button id="join-room" class="primary">创建 / 加入房间</button><p id="room-status" role="status">人数不足自动补齐 AI，掉线由 AI 接管。</p><a id="invite-room" hidden target="_blank" rel="noopener">打开邀请链接（可复制给朋友）</a><small>GitHub Pages 玩家需要连接已部署的对战服务器。</small></dialog>
+<dialog id="room-dialog" class="room-dialog"><button id="close-room" class="close" aria-label="关闭">×</button><h2>多人对战 · AI 补位</h2><p>相同服务器、相同房间码即可一起玩，最多 10 人。</p><label>对战服务器<input id="server-url" placeholder="wss://你的对战服务器" autocomplete="url"></label><label>玩家昵称<input id="player-name" maxlength="16" value="召唤师"></label><label>房间码<input id="room-code" maxlength="12" pattern="[A-Za-z0-9]{4,12}" autocomplete="off"></label><button id="join-room" class="primary" disabled>创建 / 加入房间</button><p id="room-status" role="status">正在加载游戏与联网模块…</p><a id="invite-room" hidden target="_blank" rel="noopener">打开邀请链接（可复制给朋友）</a><small>GitHub Pages 玩家需要连接已部署的对战服务器。</small></dialog>
 </body>
 </html>

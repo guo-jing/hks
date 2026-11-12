@@ -5,7 +5,7 @@ try {
   window.BattleRenderer = BattleRenderer;
   const script = document.createElement('script');
   script.src = './game.js';
-  script.onload=()=>{const network=document.createElement('script');network.src='./multiplayer.js';document.body.append(network);};
+  script.onload=async()=>{await new Promise((resolve,reject)=>{const transport=document.createElement('script');transport.src='./http-transport.js';transport.onload=resolve;transport.onerror=reject;document.body.append(transport);});const network=document.createElement('script');network.src='./multiplayer.js';network.onerror=()=>{document.getElementById('room-status').textContent='联网模块加载失败，请刷新页面重试';};document.body.append(network);};
   script.onerror = () => showFailure('游戏文件加载失败，请刷新页面重试。');
   document.body.append(script);
 } catch (error) {
@@ -23,6 +23,7 @@ function showFailure(message) {
   description.textContent = message;
   content.append(title, description);
   overlay.replaceChildren(content);
+  document.getElementById('room-status').textContent=message;
 }
 window.addEventListener('error', event => {
   if (/WebGL|context|BattleRenderer/.test(event.message)) showFailure('无法初始化 3D 战场，请开启浏览器硬件加速后刷新。');
